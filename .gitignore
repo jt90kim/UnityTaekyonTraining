@@ -1,0 +1,143 @@
+# =========================
+# Unity 6 .gitignore
+# =========================
+
+# This .gitignore is optimized for Unity 6 and Unity as a Library usage
+
+############################
+# Unity generated folders
+############################
+
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+UserSettings/
+MemoryCaptures/
+Recordings/
+
+############################
+# Unity generated files
+############################
+
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+############################
+# Unity cache
+############################
+
+/Library/
+/Temp/
+/Obj/
+/Build/
+/Builds/
+
+############################
+# Visual Studio / Rider
+############################
+
+.vs/
+.idea/
+*.DotSettings.user
+
+############################
+# VSCode
+############################
+
+.vscode/
+
+############################
+# OS generated
+############################
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+############################
+# Crash reports
+############################
+
+sysinfo.txt
+
+############################
+# Unity Addressables
+############################
+
+/Assets/AddressableAssetsData/*/*.bin*
+/Assets/AddressableAssetsData/*.log
+
+############################
+# Android (Unity export)
+############################
+
+.gradle/
+local.properties
+*.apk
+*.aab
+*.keystore
+*.unitypackage
+
+############################
+# Android Studio (if Unity as Library)
+############################
+
+Android/.gradle/
+Android/build/
+Android/local.properties
+Android/captures/
+Android/.idea/
+Android/*.iml
+
+############################
+# Unity as Library export
+############################
+
+Unity/Build/
+Unity/Builds/
+Unity/Library/
+Unity/Temp/
+Unity/Obj/
+Unity/Logs/
+Unity/UserSettings/
+
+############################
+# IL2CPP
+############################
+
+il2cppOutput/
+
+############################
+# Burst
+############################
+
+Library/BurstCache/
+
+############################
+# JetBrains Rider
+############################
+
+.idea/
+
+############################
+# Generated meta files (optional safety)
+############################
+
+# Uncomment if needed:
+# *.pidb.meta
+# *.pdb.meta
