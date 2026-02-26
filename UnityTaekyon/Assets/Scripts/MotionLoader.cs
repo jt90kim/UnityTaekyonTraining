@@ -14,7 +14,7 @@ namespace Taekyon
             var json = File.ReadAllText(path);
             var settings = new JsonSerializerSettings { Converters = { new Vector3ArrayConverter() } };
             var clip = JsonConvert.DeserializeObject<MotionClip>(json, settings);
-
+            Debug.Log("[MotionLoader] Raw JSON: " + json);
             if (clip?.frames != null)
             {
                 var jointNames = new HashSet<string>();
