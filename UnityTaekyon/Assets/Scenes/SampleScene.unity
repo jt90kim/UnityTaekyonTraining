@@ -689,6 +689,7 @@ GameObject:
   - component: {fileID: 1302377670}
   - component: {fileID: 1302377671}
   - component: {fileID: 1302377672}
+  - component: {fileID: 1302377673}
   m_Layer: 0
   m_Name: SkeletonRoot
   m_TagString: Untagged
@@ -738,7 +739,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1302377668}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db47108ca46d78c42b9b24fee0c18224, type: 3}
   m_Name: 
@@ -751,11 +752,23 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1302377668}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f82b9bc8c38902446adba257a2468ffb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Taekyon.DebugBoneDrawer
+--- !u!114 &1302377673
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1302377668}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 023be3b464035424da7923fa0a1fd17a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Taekyon.RuntimeBoneRenderer
 --- !u!1 &1358654485
 GameObject:
   m_ObjectHideFlags: 0
