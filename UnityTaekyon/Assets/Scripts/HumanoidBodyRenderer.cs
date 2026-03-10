@@ -17,19 +17,35 @@ namespace Taekyon
         void Start()
         {
             hip = transform.Find("hip");
-            kneeL = hip.Find("knee_l");
-            kneeR = hip.Find("knee_r");
+            Debug.Log("Hip found: " + (hip != null));
 
-            CreateLimb(hip, kneeL);
-            CreateLimb(hip, kneeR);
+            if (hip != null)
+            {
+                kneeL = hip.Find("knee_l");
+                kneeR = hip.Find("knee_r");
 
-            CreateTorso();
+                Debug.Log("[HumanoidBodyRenderer] knee_l found: " + (kneeL != null));
+                Debug.Log("[HumanoidBodyRenderer] knee_r found: " + (kneeR != null));
+            }
+
+            if (hip != null && kneeL != null)
+            {
+                CreateLimb(hip, kneeL);
+            }
+
+            //if (hip != null && kneeR != null)
+            //    CreateLimb(hip, kneeR);
+
+            //if (hip != null) { }
+            //    CreateTorso();
         }
 
         void CreateLimb(Transform a, Transform b)
         {
             GameObject capsule = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            capsule.transform.SetParent(transform);
+
+            capsule.transform.SetParent(null);
+            capsule.transform.localScale = Vector3.one;
 
             capsule.GetComponent<Collider>().enabled = false;
 
@@ -44,7 +60,7 @@ namespace Taekyon
             GameObject torso = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             torso.transform.SetParent(hip);
 
-            torso.transform.localScale = new Vector3(0.4f, 0.6f, 0.4f);
+            torso.transform.localScale = new Vector3(0.3f, 0.4f, 0.3f);
             torso.transform.localPosition = new Vector3(0, 0.6f, 0);
 
             torso.GetComponent<Collider>().enabled = false;
@@ -58,8 +74,9 @@ namespace Taekyon
            
                 if (hip != null)
                 {
-                    Debug.Log("HIP LOCAL: " + hip.localPosition);
-                }
+                    Debug.Log("[HumanoidBodyRenderer] HIP LOCAL: " + hip.localPosition);
+                Debug.Log("[HumanoidBodyRenderer] HIP WORLD POSITION: " + hip.position);
+            }
  
             foreach (var limb in limbCapsules)
             {
@@ -74,7 +91,8 @@ namespace Taekyon
                 capsule.up = direction.normalized;
 
                 float length = direction.magnitude;
-                capsule.localScale = new Vector3(0.2f, length / 2f, 0.2f);
+                //capsule.localScale = new Vector3(0.2f, length / 2f, 0.2f);
+                capsule.localScale = new Vector3(0.15f, length * 0.5f, 0.15f);
             }
         }
     }

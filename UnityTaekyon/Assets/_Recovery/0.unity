@@ -778,8 +778,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1637871568}
+  m_Children: []
   m_Father: {fileID: 1263439801}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1263439800
@@ -826,8 +825,7 @@ GameObject:
   - component: {fileID: 1302377669}
   - component: {fileID: 1302377670}
   - component: {fileID: 1302377674}
-  - component: {fileID: 1302377676}
-  - component: {fileID: 1302377677}
+  - component: {fileID: 1302377675}
   m_Layer: 0
   m_Name: SkeletonRoot
   m_TagString: Untagged
@@ -883,22 +881,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Taekyon.HumanoidBodyRenderer
   bodyMaterial: {fileID: 2100000, guid: 05fc594925251224ebd0798671d3f380, type: 2}
---- !u!114 &1302377676
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1302377668}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4bdaefc66209e4743999034b81c14d36, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Taekyon.RuntimeSkeletonRenderer
-  hip: {fileID: 1263439801}
-  knee_l: {fileID: 1358654486}
-  knee_r: {fileID: 1060215348}
---- !u!114 &1302377677
+--- !u!114 &1302377675
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -910,23 +893,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 675acbaed80e6884eb37d3386b6265bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Taekyon.DebugSkeletonRenderer
-  joints:
-  - {fileID: 1263439801}
-  - {fileID: 1358654486}
-  - {fileID: 1060215348}
-  - {fileID: 1558414759}
-  - {fileID: 1637871568}
-  bones:
-  - a: {fileID: 1263439801}
-    b: {fileID: 1358654486}
-  - a: {fileID: 1358654486}
-    b: {fileID: 1558414759}
-  - a: {fileID: 1263439801}
-    b: {fileID: 1060215348}
-  - a: {fileID: 1060215348}
-    b: {fileID: 1637871568}
-  jointSize: 0.05
-  boneWidth: 0.12
+  hip: {fileID: 0}
+  knee_l: {fileID: 0}
+  knee_r: {fileID: 0}
 --- !u!1 &1358654485
 GameObject:
   m_ObjectHideFlags: 0
@@ -955,71 +924,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1558414759}
+  m_Children: []
   m_Father: {fileID: 1263439801}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1558414758
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1558414759}
-  m_Layer: 0
-  m_Name: ankle_l
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1558414759
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1558414758}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1358654486}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1637871567
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1637871568}
-  m_Layer: 0
-  m_Name: ankle_r
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1637871568
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1637871567}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1060215348}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1703202308
 GameObject:

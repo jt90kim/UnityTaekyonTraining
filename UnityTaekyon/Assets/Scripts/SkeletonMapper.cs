@@ -27,11 +27,19 @@ public class SkeletonMapper : MonoBehaviour
             }
         }
 
-       // Debug.Log("SkeletonMapper initialized with joints: " + string.Join(", ", jointMap.Keys));
+        // Ensure all defined joints exist
+        foreach (var name in Taekyon.SkeletonDefinition.JointNames)
+        {
+            if (!jointMap.ContainsKey(name))
+            {
+                Debug.LogWarning($"Missing joint binding: {name}");
+            }
+        }
     }
 
     public Transform GetJoint(string jointName)
     {
+        Debug.Log("[JTK] SkeletonMapper with joints: " + string.Join(", ", jointMap.Keys));
         if (jointMap.TryGetValue(jointName, out var transform))
         {
             return transform;
@@ -43,15 +51,29 @@ public class SkeletonMapper : MonoBehaviour
 
     public void ApplyFrame(MotionFrame frame)
     {
-        if (frame?.joints == null) return;
+        if (frame?.joints == null)
+        {
+            Debug.LogError("[DEBUG] frame.joints is NULL");
+            return;
+        }
+
         foreach (var kvp in frame.joints)
         {
+            Debug.Log($"[DEBUG] Joint {kvp.Key} value = {kvp.Value}");
+
             var transform = GetJoint(kvp.Key);
-            if (transform != null)
+
+            if (transform == null)
             {
-                transform.localPosition = kvp.Value;
-               // Debug.Log($"Applied joint {kvp.Key}: {kvp.Value}");
+                Debug.LogError("[DEBUG] Transform NULL for joint: " + kvp.Key);
+                continue;
             }
+
+            Debug.Log($"[DEBUG] AFTER set {kvp.Key} local = {transform.localPosition}");
+
+            transform.localPosition = kvp.Value;
+
+            Debug.Log($"[DEBUG] AFTER set {kvp.Key} local = {transform.localPosition}");
         }
     }
 }

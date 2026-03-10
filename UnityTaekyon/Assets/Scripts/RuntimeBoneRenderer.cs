@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Taekyon
 {
-    public class RuntimeSkeletonRenderer : MonoBehaviour
+    public class RuntimeBoneRenderer : MonoBehaviour
     {
         private List<(Transform joint, Transform parent, LineRenderer line)> bones
             = new List<(Transform, Transform, LineRenderer)>();

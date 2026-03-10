@@ -260,6 +260,10 @@ namespace Taekyon
 
             Debug.Log($"[MotionPlayer] Applying frame {currentFrameIndex} / {currentClip.frames.Length - 1}");
 
+            if ( skeletonMapper == null)
+            {
+                Debug.Log($"SHIT");
+            }
             skeletonMapper.ApplyFrame(frame);
         }
 
