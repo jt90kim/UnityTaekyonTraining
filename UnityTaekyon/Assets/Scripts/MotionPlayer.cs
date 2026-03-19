@@ -127,12 +127,14 @@ namespace Taekyon
 
             currentFrameIndex = nextIndex;
 
-            if (currentFrameIndex >= currentClip.frames.Length)
+            if (nextIndex >= currentClip.frames.Length)
             {
                 state = PlaybackState.Finished;
                 Debug.Log("[MotionPlayer] State → Finished");
                 return;
             }
+
+            currentFrameIndex = nextIndex;
 
             Debug.Log($"[MotionPlayer] Advance → frame {currentFrameIndex}");
             ApplyCurrentFrame();
@@ -242,6 +244,12 @@ namespace Taekyon
                 Debug.Log("[MotionPlayer] Hold released");
             }
         }
+
+        public bool IsFinished()
+        {
+            return state == PlaybackState.Finished;
+        }
+
         private void ApplyCurrentFrame()
         {
             if (currentClip == null)

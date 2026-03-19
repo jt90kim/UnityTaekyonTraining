@@ -69,9 +69,18 @@ public class SkeletonMapper : MonoBehaviour
                 continue;
             }
 
-            Debug.Log($"[DEBUG] AFTER set {kvp.Key} local = {transform.localPosition}");
+            Debug.Log($"[DEBUG] BEFORE set {kvp.Key} local = {transform.localPosition}");
 
-            transform.localPosition = kvp.Value;
+            Vector3 pos = kvp.Value;
+
+            // normalize around hip
+            if (kvp.Key == "hip")
+            {
+                pos.x = 0;
+                pos.z = 0;
+            }
+
+            transform.localPosition = pos;
 
             Debug.Log($"[DEBUG] AFTER set {kvp.Key} local = {transform.localPosition}");
         }

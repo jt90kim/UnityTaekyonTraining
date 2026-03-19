@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,27 +9,36 @@ namespace Taekyon
     public class AndroidBridge : MonoBehaviour
     {
         public SkeletonMapper skeletonMapper;
-        private MotionTimeController timeController;
 
+        // Technique JSONs (assign in inspector)
+        public TextAsset kickMotion;
+        public TextAsset stepMotion;
 
         private MotionPlayer motionPlayer;
+        private MotionTimeController timeController;
+
+        private Queue<System.Action> techniqueQueue = new Queue<System.Action>();
+        private bool isPlayingTechnique = false;
 
         void Awake()
         {
             motionPlayer = new MotionPlayer(skeletonMapper);
             timeController = new MotionTimeController(motionPlayer);
-
         }
 
         public void ReceiveMessage(string message)
         {
             Debug.Log("[AndroidBridge] Received message: " + message);
 
+            // ---------------------------
+            // LOAD FROM FILE (existing)
+            // ---------------------------
             if (message.StartsWith("LOAD_MOTION:"))
             {
                 string path = message.Substring("LOAD_MOTION:".Length);
 
                 var clip = MotionLoader.Load(path);
+
                 if (!motionPlayer.Load(clip))
                 {
                     Debug.LogError("Motion load failed");
@@ -36,15 +47,49 @@ namespace Taekyon
                 return;
             }
 
+            // ---------------------------
+            // LOAD FROM RAW JSON (future-ready)
+            // ---------------------------
+            if (message.StartsWith("LOAD_JSON:"))
+            {
+                string json = message.Substring("LOAD_JSON:".Length);
+
+                var clip = MotionLoader.LoadFromJson(json);
+
+                if (!motionPlayer.Load(clip))
+                {
+                    Debug.LogError("Motion load failed (JSON)");
+                }
+
+                return;
+            }
+
+            // ---------------------------
+            // TECHNIQUES (NEW)
+            // ---------------------------
+            if (message == "KICK")
+            {
+                EnqueueTechnique(() => PlayFromTextAsset(kickMotion));
+                return;
+            }
+
+            if (message == "STEP")
+            {
+                EnqueueTechnique(() => PlayFromTextAsset(stepMotion));
+                return;
+            }
+
+            // ---------------------------
+            // SESSION CONTROL (existing)
+            // ---------------------------
             if (message == "START_SESSION")
             {
-                //motionPlayer.Start();
                 motionPlayer.SetTimingProfile(
                     new DrillTimingProfile(triggerFrame: 1, holdAtTrigger: true)
                 );
 
                 motionPlayer.Start();
-                timeController.Start(motionPlayer.GetFps()); // you'll add this getter
+                timeController.Start(motionPlayer.GetFps());
                 return;
             }
 
@@ -54,17 +99,6 @@ namespace Taekyon
                 return;
             }
 
-            if (message == "NEXT_FRAME")
-            {
-                motionPlayer.NextFrame();
-                return;
-            }
-
-            if (message == "PREVIOUS_FRAME")
-            {
-                motionPlayer.PreviousFrame();
-                return;
-            }
             if (message == "PAUSE_SESSION")
             {
                 motionPlayer.Pause();
@@ -74,6 +108,21 @@ namespace Taekyon
             if (message == "RESUME_SESSION")
             {
                 motionPlayer.Resume();
+                return;
+            }
+
+            // ---------------------------
+            // FRAME CONTROL (existing)
+            // ---------------------------
+            if (message == "NEXT_FRAME")
+            {
+                motionPlayer.NextFrame();
+                return;
+            }
+
+            if (message == "PREVIOUS_FRAME")
+            {
+                motionPlayer.PreviousFrame();
                 return;
             }
 
@@ -99,14 +148,66 @@ namespace Taekyon
                 return;
             }
 
+            Debug.LogWarning("[AndroidBridge] Unknown message: " + message);
+        }
+
+        // ---------------------------
+        // Helper: play TextAsset motion
+        // ---------------------------
+        void PlayFromTextAsset(TextAsset asset)
+        {
+            if (asset == null)
+            {
+                Debug.LogError("[AndroidBridge] Motion asset is null");
+                return;
+            }
+
+            var clip = MotionLoader.LoadFromJson(asset.text);
+
+            if (!motionPlayer.Load(clip))
+            {
+                Debug.LogError("[AndroidBridge] Failed to load clip");
+                return;
+            }
+
+            motionPlayer.Start();
+            timeController.Start(motionPlayer.GetFps());
         }
 
         void Update()
         {
             timeController.Update(Time.deltaTime);
 
+            // Check if motion finished
+            if (isPlayingTechnique && motionPlayer.IsFinished())
+            {
+                Debug.Log("[Queue] Technique finished");
+                PlayNextTechnique();
+            }
+        }
+        void EnqueueTechnique(System.Action action)
+        {
+            techniqueQueue.Enqueue(action);
+
+            if (!isPlayingTechnique)
+            {
+                PlayNextTechnique();
+            }
         }
 
+        void PlayNextTechnique()
+        {
+            if (techniqueQueue.Count == 0)
+            {
+                isPlayingTechnique = false;
+                return;
+            }
+
+            isPlayingTechnique = true;
+
+            var action = techniqueQueue.Dequeue();
+            action.Invoke();
+        }
     }
 
     //public class AndroidBridge : MonoBehaviour

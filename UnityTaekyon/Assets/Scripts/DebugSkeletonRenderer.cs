@@ -68,6 +68,17 @@ public class DebugSkeletonRenderer : MonoBehaviour
             renderer.material.color = Color.yellow;
 
             jointSpheres.Add(sphere);
+
+            if (kvp.Key == "ankle_r")
+            {
+                var trail = sphere.AddComponent<TrailRenderer>();
+                trail.time = 0.5f;
+                trail.startWidth = 0.1f;
+                trail.endWidth = 0.02f;
+                trail.material = new Material(Shader.Find("Sprites/Default"));
+                trail.startColor = Color.red;
+                trail.endColor = Color.yellow;
+            }
         }
     }
 
