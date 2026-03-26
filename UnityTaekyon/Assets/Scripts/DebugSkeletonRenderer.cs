@@ -4,6 +4,7 @@ using Taekyon;
 
 public class DebugSkeletonRenderer : MonoBehaviour
 {
+    [Header("Assign ALL joints here")]
     public List<Transform> joints = new List<Transform>();
 
     public float jointSize = 0.06f;
@@ -11,7 +12,8 @@ public class DebugSkeletonRenderer : MonoBehaviour
 
     private Dictionary<string, Transform> jointMap = new Dictionary<string, Transform>();
 
-    private List<GameObject> jointSpheres = new List<GameObject>();
+    // FIX: map joint name → sphere
+    private Dictionary<string, GameObject> jointSpheres = new Dictionary<string, GameObject>();
 
     private struct BoneRender
     {
@@ -49,6 +51,8 @@ public class DebugSkeletonRenderer : MonoBehaviour
             if (!jointMap.ContainsKey(j.name))
                 jointMap.Add(j.name, j);
         }
+
+        Debug.Log("[Renderer] Joints: " + string.Join(", ", jointMap.Keys));
     }
 
 
@@ -60,15 +64,15 @@ public class DebugSkeletonRenderer : MonoBehaviour
 
             sphere.name = "joint_" + kvp.Key;
             sphere.transform.parent = transform;
-
             sphere.transform.localScale = Vector3.one * jointSize;
 
             var renderer = sphere.GetComponent<Renderer>();
             renderer.material = new Material(Shader.Find("Sprites/Default"));
             renderer.material.color = Color.yellow;
 
-            jointSpheres.Add(sphere);
+            jointSpheres[kvp.Key] = sphere;
 
+            // Optional: trail for debugging motion
             if (kvp.Key == "ankle_r")
             {
                 var trail = sphere.AddComponent<TrailRenderer>();
@@ -85,11 +89,13 @@ public class DebugSkeletonRenderer : MonoBehaviour
 
     void CreateBoneLines()
     {
+        boneLines.Clear();
+
         foreach (var bone in SkeletonDefinition.Bones)
         {
             if (!jointMap.ContainsKey(bone.Item1) || !jointMap.ContainsKey(bone.Item2))
             {
-                Debug.LogWarning($"Missing joint for bone {bone.Item1} → {bone.Item2}");
+                Debug.LogWarning($"[Renderer] Missing joint for bone {bone.Item1} → {bone.Item2}");
                 continue;
             }
 
@@ -103,11 +109,15 @@ public class DebugSkeletonRenderer : MonoBehaviour
 
             lr.positionCount = 2;
             lr.useWorldSpace = true;
-            lr.widthMultiplier = boneWidth;
+
+            // FIX: width consistency
+            lr.startWidth = boneWidth;
+            lr.endWidth = boneWidth;
 
             lr.material = new Material(Shader.Find("Sprites/Default"));
-            lr.startColor = Color.white;
-            lr.endColor = Color.white;
+            Color c = GetBoneColor(bone.Item1, bone.Item2);
+            lr.startColor = c;
+            lr.endColor = c;
 
             BoneRender br = new BoneRender
             {
@@ -120,15 +130,31 @@ public class DebugSkeletonRenderer : MonoBehaviour
         }
     }
 
+    Color GetBoneColor(string a, string b)
+    {
+        // legs
+        if (a.Contains("knee") || a.Contains("ankle"))
+            return Color.green;
+
+        // arms
+        if (a.Contains("shoulder") || a.Contains("elbow") || a.Contains("wrist"))
+            return Color.cyan;
+
+        // torso
+        if (a == "hip" || a == "spine" || a == "neck" || a == "head")
+            return Color.yellow;
+
+        return Color.white;
+    }
+
 
     void UpdateJointSpheres()
     {
-        int i = 0;
-
         foreach (var kvp in jointMap)
         {
-            jointSpheres[i].transform.position = kvp.Value.position;
-            i++;
+            if (!jointSpheres.ContainsKey(kvp.Key)) continue;
+
+            jointSpheres[kvp.Key].transform.position = kvp.Value.position;
         }
     }
 
@@ -137,6 +163,8 @@ public class DebugSkeletonRenderer : MonoBehaviour
     {
         foreach (var bone in boneLines)
         {
+            if (bone.a == null || bone.b == null) continue;
+
             bone.line.SetPosition(0, bone.a.position);
             bone.line.SetPosition(1, bone.b.position);
         }

@@ -22,7 +22,8 @@ namespace Taekyon
         private float frameDuration = 0f;
         private bool isHeld = false;
         private DrillTimingProfile timingProfile;
-
+        private MotionFrame currentFrame;
+        private MotionFrame nextFrame;
         public MotionPlayer(SkeletonMapper mapper)
         {
             skeletonMapper = mapper;
@@ -87,14 +88,53 @@ namespace Taekyon
             Debug.Log("[MotionPlayer] State → Loaded (stopped)");
         }
 
+        //public void Update(float deltaTime)
+        //{
+        //    if (state != PlaybackState.Playing || currentClip == null)
+        //        return;
+
+        //    // Intentionally empty for now.
+        //    // Time authority will be external.
+        //}
         public void Update(float deltaTime)
         {
             if (state != PlaybackState.Playing || currentClip == null)
                 return;
 
-            // Intentionally empty for now.
-            // Time authority will be external.
+            playbackTimer += deltaTime;
+
+            float t = playbackTimer / frameDuration;
+
+            ApplyInterpolatedFrame(t);
+
+            if (t >= 1f)
+            {
+                playbackTimer = 0f;
+                AdvanceOneFrame();
+            }
         }
+
+        void ApplyInterpolatedFrame(float t)
+        {
+            if (currentFrame == null || nextFrame == null)
+                return;
+
+            foreach (var jointName in SkeletonDefinition.JointNames)
+            {
+                if (!currentFrame.joints.TryGetValue(jointName, out var a))
+                    continue;
+
+                if (!nextFrame.joints.TryGetValue(jointName, out var b))
+                    continue;
+
+                Vector3 pos = Vector3.Lerp(a, b, t);
+
+                var transform = skeletonMapper.GetJoint(jointName);
+                if (transform != null)
+                    transform.localPosition = pos;
+            }
+        }
+
         public float GetFps()
         {
             return currentClip != null ? currentClip.fps : 1f;
@@ -118,7 +158,8 @@ namespace Taekyon
                 nextIndex == timingProfile.TriggerFrame)
             {
                 currentFrameIndex = nextIndex;
-                ApplyCurrentFrame();
+                //ApplyCurrentFrame();
+                PrepareFramePair();
 
                 isHeld = true;
                 Debug.Log($"[MotionPlayer] Drill trigger hold at frame {currentFrameIndex}");
@@ -140,7 +181,15 @@ namespace Taekyon
             ApplyCurrentFrame();
         }
 
+        void PrepareFramePair()
+        {
+            if (currentClip == null) return;
 
+            currentFrame = currentClip.frames[currentFrameIndex];
+
+            int nextIndex = Mathf.Min(currentFrameIndex + 1, currentClip.frames.Length - 1);
+            nextFrame = currentClip.frames[nextIndex];
+        }
         // =============================
         // MANUAL FRAME STEPPING
         // =============================

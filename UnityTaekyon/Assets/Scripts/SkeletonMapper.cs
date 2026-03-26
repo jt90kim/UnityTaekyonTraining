@@ -11,32 +11,41 @@ public class SkeletonMapper : MonoBehaviour
         public Transform jointTransform;
     }
 
-    public List<JointBinding> joints = new List<JointBinding>();
-
     private Dictionary<string, Transform> jointMap;
 
     void Awake()
     {
         jointMap = new Dictionary<string, Transform>();
 
-        foreach (var joint in joints)
+        foreach (var jointName in SkeletonDefinition.JointNames)
         {
-            if (!jointMap.ContainsKey(joint.jointName))
+            Transform t = FindDeepChild(transform, jointName);
+
+            if (t != null)
             {
-                jointMap.Add(joint.jointName, joint.jointTransform);
+                jointMap[jointName] = t;
+            }
+            else
+            {
+                Debug.LogError($"[SkeletonMapper] Missing joint in hierarchy: {jointName}");
             }
         }
 
-        // Ensure all defined joints exist
-        foreach (var name in Taekyon.SkeletonDefinition.JointNames)
-        {
-            if (!jointMap.ContainsKey(name))
-            {
-                Debug.LogWarning($"Missing joint binding: {name}");
-            }
-        }
+        Debug.Log("[SkeletonMapper] Initialized joints: " + string.Join(", ", jointMap.Keys));
     }
+    Transform FindDeepChild(Transform parent, string name)
+    {
+        foreach (Transform child in parent)
+        {
+            if (child.name == name)
+                return child;
 
+            var result = FindDeepChild(child, name);
+            if (result != null)
+                return result;
+        }
+        return null;
+    }
     public Transform GetJoint(string jointName)
     {
         Debug.Log("[JTK] SkeletonMapper with joints: " + string.Join(", ", jointMap.Keys));
@@ -56,7 +65,9 @@ public class SkeletonMapper : MonoBehaviour
             Debug.LogError("[DEBUG] frame.joints is NULL");
             return;
         }
-
+        //Debug.Log($"SPINE: {frame.joints["spine"]}");
+        //Debug.Log($"NECK: {frame.joints["neck"]}");
+        //Debug.Log($"HEAD: {frame.joints["head"]}");
         foreach (var kvp in frame.joints)
         {
             Debug.Log($"[DEBUG] Joint {kvp.Key} value = {kvp.Value}");
@@ -73,12 +84,12 @@ public class SkeletonMapper : MonoBehaviour
 
             Vector3 pos = kvp.Value;
 
-            // normalize around hip
-            if (kvp.Key == "hip")
-            {
-                pos.x = 0;
-                pos.z = 0;
-            }
+            //// normalize around hip
+            //if (kvp.Key == "hip")
+            //{
+            //    pos.x = 0;
+            //    pos.z = 0;
+            //}
 
             transform.localPosition = pos;
 

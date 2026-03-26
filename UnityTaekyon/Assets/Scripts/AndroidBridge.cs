@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -17,9 +17,19 @@ namespace Taekyon
         private MotionPlayer motionPlayer;
         private MotionTimeController timeController;
 
-        private Queue<System.Action> techniqueQueue = new Queue<System.Action>();
-        private bool isPlayingTechnique = false;
+        private float delayTimer = 0f;
+        private bool isWaiting = false;
+        Queue<System.Action> triggerQueue = new Queue<System.Action>();
+        bool waitingForTrigger = false;
+        class QueuedAction
+        {
+            public System.Action action;
+            public float delay;
+        }
 
+        private Queue<QueuedAction> techniqueQueue = new Queue<QueuedAction>();
+        private bool isPlayingTechnique = false;
+        private System.Action pendingAction;
         void Awake()
         {
             motionPlayer = new MotionPlayer(skeletonMapper);
@@ -29,6 +39,18 @@ namespace Taekyon
         public void ReceiveMessage(string message)
         {
             Debug.Log("[AndroidBridge] Received message: " + message);
+
+            if (message.StartsWith("{"))
+            {
+                HandleJson(message);
+                return;
+            }
+
+            if (message == "TRIGGER")
+            {
+                Trigger();
+                return;
+            }
 
             // ---------------------------
             // LOAD FROM FILE (existing)
@@ -69,13 +91,13 @@ namespace Taekyon
             // ---------------------------
             if (message == "KICK")
             {
-                EnqueueTechnique(() => PlayFromTextAsset(kickMotion));
+                EnqueueTechnique(() => PlayFromTextAsset(kickMotion), 0.5f);
                 return;
             }
 
             if (message == "STEP")
             {
-                EnqueueTechnique(() => PlayFromTextAsset(stepMotion));
+                EnqueueTechnique(() => PlayFromTextAsset(stepMotion), 0.3f);
                 return;
             }
 
@@ -84,9 +106,9 @@ namespace Taekyon
             // ---------------------------
             if (message == "START_SESSION")
             {
-                motionPlayer.SetTimingProfile(
-                    new DrillTimingProfile(triggerFrame: 1, holdAtTrigger: true)
-                );
+                //motionPlayer.SetTimingProfile(
+                //    new DrillTimingProfile(triggerFrame: 1, holdAtTrigger: true)
+                //);
 
                 motionPlayer.Start();
                 timeController.Start(motionPlayer.GetFps());
@@ -151,6 +173,49 @@ namespace Taekyon
             Debug.LogWarning("[AndroidBridge] Unknown message: " + message);
         }
 
+        void HandleJson(string json)
+        {
+            var drill = JsonUtility.FromJson<DrillSequence>(json);
+
+            if (drill.type == "DRILL")
+            {
+                RunDrill(drill);
+            }
+        }
+
+        void RunDrill(DrillSequence drill)
+        {
+            foreach (var step in drill.sequence)
+            {
+                float delay = ResolveDelay(step);
+
+                TextAsset motion = null;
+
+                // PRIORITY 1: weighted
+                if (step.weights != null && step.weights.Length > 0)
+                {
+                    motion = PickWeighted(step.weights);
+                }
+                // PRIORITY 2: random flag
+                else
+                {
+                    motion = ResolveTechnique(step.action, step.random);
+                }
+
+                if (motion == null)
+                    continue;
+
+                if (step.waitForTrigger)
+                {
+                    EnqueueWaitForTrigger(() => PlayFromTextAsset(motion));
+                }
+                else
+                {
+                    EnqueueTechnique(() => PlayFromTextAsset(motion), delay);
+                }
+            }
+        }
+
         // ---------------------------
         // Helper: play TextAsset motion
         // ---------------------------
@@ -173,26 +238,113 @@ namespace Taekyon
             motionPlayer.Start();
             timeController.Start(motionPlayer.GetFps());
         }
+        TextAsset PickWeighted(WeightedOption[] options)
+        {
+            float total = 0f;
 
+            foreach (var o in options)
+                total += o.weight;
+
+            float r = Random.Range(0f, total);
+            float cumulative = 0f;
+
+            foreach (var o in options)
+            {
+                cumulative += o.weight;
+
+                if (r <= cumulative)
+                {
+                    Debug.Log($"[Weighted] Picked {o.name}");
+                    return ResolveTechnique(o.name, false);
+                }
+            }
+
+            return null;
+        }
         void Update()
         {
+            if (waitingForTrigger)
+            {
+                return;
+            }
+
             timeController.Update(Time.deltaTime);
 
-            // Check if motion finished
+            // Handle delay
+            if (isWaiting)
+            {
+                delayTimer -= Time.deltaTime;
+
+                if (delayTimer <= 0f)
+                {
+                    isWaiting = false;
+                    isPlayingTechnique = true;
+
+                    pendingAction?.Invoke();
+                    pendingAction = null;
+                }
+
+                return;
+            }
+
+            // Handle motion completion
             if (isPlayingTechnique && motionPlayer.IsFinished())
             {
                 Debug.Log("[Queue] Technique finished");
+                isPlayingTechnique = false;
                 PlayNextTechnique();
             }
         }
-        void EnqueueTechnique(System.Action action)
+        float ResolveDelay(DrillStep step)
         {
-            techniqueQueue.Enqueue(action);
+            if (step.delay == 0 && step.delayMin == 0 && step.delayMax == 0)
+            {
+                return 0.3f; // default rhythm
+            }
+            // Use random range if provided
+            if (step.delayMax > step.delayMin)
+            {
+                float d = Random.Range(step.delayMin, step.delayMax);
+                Debug.Log($"[Delay] Random delay: {d:F2}");
+                return d;
+            }
 
-            if (!isPlayingTechnique)
+            // fallback to fixed delay
+            return step.delay;
+        }
+        void EnqueueTechnique(System.Action action, float delay = 0f)
+        {
+            techniqueQueue.Enqueue(new QueuedAction
+            {
+                action = action,
+                delay = delay
+            });
+
+            if (!isPlayingTechnique && !isWaiting)
             {
                 PlayNextTechnique();
             }
+        }
+
+        void EnqueueWaitForTrigger(System.Action action)
+        {
+            triggerQueue.Enqueue(action);
+            waitingForTrigger = true;
+
+            Debug.Log("[Trigger] Queued trigger step");
+        }
+
+        public void Trigger()
+        {
+            if (triggerQueue.Count == 0)
+                return;
+
+            Debug.Log("[Trigger] Activated");
+
+            var action = triggerQueue.Dequeue();
+            action.Invoke();
+
+            waitingForTrigger = triggerQueue.Count > 0;
         }
 
         void PlayNextTechnique()
@@ -203,10 +355,58 @@ namespace Taekyon
                 return;
             }
 
-            isPlayingTechnique = true;
+            var next = techniqueQueue.Dequeue();
 
-            var action = techniqueQueue.Dequeue();
-            action.Invoke();
+            if (next.delay > 0f)
+            {
+                delayTimer = next.delay;
+                isWaiting = true;
+
+                // store action to run after delay
+                pendingAction = next.action;
+                return;
+            }
+
+            isPlayingTechnique = true;
+            next.action.Invoke();
+        }
+
+        TextAsset ResolveTechnique(string action, bool random)
+        {
+            if (!random)
+            {
+                // deterministic
+                if (action == "STEP") return stepMotion;
+                if (action == "KICK") return kickMotion;
+
+                Debug.LogWarning("[Technique] Unknown action: " + action);
+                return null;
+            }
+
+            // RANDOM selection
+            if (action == "KICK")
+            {
+                // later you’ll expand this list
+                TextAsset[] kicks = new TextAsset[]
+                {
+            kickMotion
+                    // future: lowKickMotion, roundKickMotion, etc.
+                };
+
+                int index = Random.Range(0, kicks.Length);
+                Debug.Log("[Technique] Random KICK → index " + index);
+
+                return kicks[index];
+            }
+
+            if (action == "STEP")
+            {
+                // you could add variations later
+                return stepMotion;
+            }
+
+            Debug.LogWarning("[Technique] Random unknown action: " + action);
+            return null;
         }
     }
 
@@ -267,7 +467,7 @@ namespace Taekyon
     //    {
     //        if (currentClip == null || currentClip.frames == null || currentClip.frames.Length == 0)
     //        {
-    //            Debug.LogWarning("Cannot start playback � no motion loaded");
+    //            Debug.LogWarning("Cannot start playback — no motion loaded");
     //            return;
     //        }
 
